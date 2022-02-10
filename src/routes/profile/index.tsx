@@ -4,14 +4,14 @@ import { Attributes, Component, ComponentChild, ComponentChildren, FunctionalCom
 import { useEffect, useState } from 'preact/hooks';
 import style from './style.css';
 
-interface Premium {
+export interface Premium {
     id: number;
     deductible: number;
     premium: number;
     saved: number;
 }
 
-type Premiums = Premium[];
+export type Premiums = Premium[];
 
 interface Props {
     user: string;
@@ -81,7 +81,7 @@ function reportPremiums(where: string, premiums: Premiums): void {
     });
 }
 
-function cheapestOption(myPremiums: Premiums, years: number): number {
+export function cheapestOption(myPremiums: Premiums, years: number): number {
     let newArray: PremiumHelper[] = [];
     myPremiums.forEach((e) => {
         let ph: PremiumHelper = calcSavedOverYears(e, years);
@@ -123,7 +123,7 @@ function cheapestOption(myPremiums: Premiums, years: number): number {
     return id;
 }
 
-function savings(myPremiums: Premiums, years: number, id: number): number {
+export function savings(myPremiums: Premiums, years: number, id: number): number {
     let savedOverTime: number = 0;
     myPremiums.forEach((e) => {
         if (e.id === id) {
@@ -133,14 +133,14 @@ function savings(myPremiums: Premiums, years: number, id: number): number {
     return savedOverTime;
 }
 
-function averageCost(myPremiums: Premiums, years: number, id: number): number {
+export function averageCost(myPremiums: Premiums, years: number, id: number): number {
     let costPerMonth: number = 0;
     myPremiums.forEach((e) => {
         if (e.id === id) {
             costPerMonth = (e.premium * years + e.deductible) / years / 12;
         }
     });
-    return costPerMonth;
+    return Math.round(costPerMonth);
 }
 
 
@@ -161,7 +161,7 @@ class MyChoice extends Component {
 
         const bestOption: number = cheapestOption(myPremiums, years);
         const totalSavings: number = savings(myPremiums, years, bestOption);
-        const costPerYear: number = Math.round(averageCost(myPremiums, years, bestOption));
+        const costPerYear: number = averageCost(myPremiums, years, bestOption);
 
         return (
             <div>
@@ -306,7 +306,7 @@ class MyPremiums extends Component {
 
 }
 
-function findAll(caller: string): Premiums {
+export function findAll(caller: string): Premiums {
     let premiumJson: string = `
     [
       {
