@@ -6,6 +6,14 @@ The idea is to help the user choose the optimal combination of premium and deduc
 
 ![Screenshot](./src/assets/Screenshot.png)
 
+## Front end logic
+
+The implemented frontend is found in the `rountes.profile` folder.
+
+## Unit tests of calculations
+
+Unit tests are found in the `profile.test` file.
+
 # frontend
 
 ## CLI Commands
