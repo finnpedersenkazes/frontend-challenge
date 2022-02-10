@@ -1,3 +1,11 @@
+# We Got You Covered
+
+## Small frontend challenge involving TypeScript, Preact and JSX.
+
+The idea is to help the user choose the optimal combination of premium and deductible.
+
+![Screenshot](./src/assets/Screenshot.png)
+
 # frontend
 
 ## CLI Commands
