@@ -1,8 +1,133 @@
-import { mixedTypeAnnotation } from '@babel/types';
-import { render } from 'enzyme';
-import { Attributes, Component, ComponentChild, ComponentChildren, FunctionalComponent, h, Ref } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { inheritInnerComments, mixedTypeAnnotation } from '@babel/types';
+// import { render } from 'enzyme';
+import { Attributes, Component, ComponentChild, ComponentChildren, FunctionalComponent, h, Ref, JSX } from 'preact';
+// import { useEffect, useState } from 'preact/hooks';
 import style from './style.css';
+
+import { Provider, connect } from 'unistore/preact';
+import createStore from 'unistore';
+
+export type AppStates = "start" | "fetchingPremiums" | "gotPremiums" | "gotChoice" | "gotAccept" | "error" ;
+
+interface State {
+    success: boolean;
+    appState: AppStates,
+    errorMessage?: string;
+    userMessage?: string;
+    choiceYears?: number;
+    allPremiums?: Premiums;
+    choiceMade: boolean;
+    bestOption?: number;
+    totalSavings?: number;
+    costPerYear?: number;
+    offerAccepted: boolean;
+};
+
+const initModel: State = {
+    success: true,
+    appState: "start",
+    errorMessage: undefined,
+    userMessage: undefined,
+    choiceYears: undefined,
+    allPremiums: undefined,
+    choiceMade: false,
+    bestOption: undefined,
+    totalSavings: undefined,
+    costPerYear: undefined,
+    offerAccepted: false
+}
+
+let store: any = createStore({ model: initModel });
+
+function setInitialState(): { model: State } {
+    return { model: initModel }
+}
+
+function setErrorState(errorMessage: string): { model: State } {
+    let resultModel: State = initModel;
+    resultModel.success = false;
+    resultModel.appState = "error";
+    resultModel.errorMessage = errorMessage;
+    resultModel.userMessage = "Ups something went wrong.";
+    return { model: resultModel }
+}
+
+function setChoiceYears(years: number): { model: State } {
+    let { model: resultModel } = store.getState();
+    resultModel.success = true;
+    resultModel.appState = "gotChoice";
+    resultModel.errorMessage = undefined;
+    resultModel.userMessage = "Good choice";
+    resultModel.choiceYears = years;
+    if (resultModel.allPremiums) {
+        resultModel.bestOption = cheapestOption(resultModel.allPremiums, years);
+        resultModel.totalSavings = savings(resultModel.allPremiums, years, resultModel.bestOption);
+        resultModel.costPerYear = averageCost(resultModel.allPremiums, years, resultModel.bestOption);
+    }
+    return { model: resultModel }
+}
+
+function setFetchingPremiums(): { Model: State } {
+    let resultModel: State = initModel;
+    resultModel.success = true;
+    resultModel.appState = "fetchingPremiums";
+    resultModel.errorMessage = undefined;
+    resultModel.userMessage = "Fetching premiums";
+    return { Model: resultModel }
+}
+
+function setGotPremiums(premiums: Premiums): { model: State } {
+    let resultModel: State = initModel;
+    resultModel.success = true;
+    resultModel.appState = "gotPremiums";
+    resultModel.errorMessage = undefined;
+    resultModel.allPremiums = premiums;
+    resultModel.userMessage = "Here are the possible premiums";
+    return { model: resultModel }
+}
+
+function setOfferAccepted(): { model: State } {
+    let { model: resultModel } = store.getState();
+    resultModel.success = true;
+    resultModel.appState = "gotAccept";
+    resultModel.errorMessage = undefined;
+    resultModel.userMessage = "Thank You!";
+    return { model: resultModel }
+}
+
+// interface Actions {
+//     loadPremiums() : State;
+// }
+
+// const actions: Actions = (store: any) => ({
+
+const actions = (store: any) => ({
+
+    loadPremiums: () => {
+        let url: string = "http://localhost:3000/premiums";
+        fetch(url, {
+            method: 'GET', // default
+        })
+            .then(response => response.json())
+            .then(function(data: any): void {
+                let myPremiums: Premiums = formatPremiums(data);
+                let newState = setGotPremiums(myPremiums);
+                store.setState(newState);
+            })
+            .catch(function(error: string): void {
+                let newState = setErrorState("Check your internet and try again.");
+                store.setState(newState);
+            })
+    },
+
+    // setChoiceYears(years: number): () => {
+    //     let newState = setChoiceYears(years);
+    //     store.setState({Model: newState});
+    // },
+
+});
+
+// https://www.youtube.com/watch?v=hipFdyhhdTg
 
 export interface Premium {
     id: number;
@@ -13,73 +138,23 @@ export interface Premium {
 
 export type Premiums = Premium[];
 
-interface Props {
-    user: string;
-}
+const MySelect = connect('state', actions) (
+    ({ model, setChoiceYears }): h.JSX.Element => (
+        <form onSubmit={(value) => setChoiceYears(value)}>
+            <p>The cheapest solution for you dependes on ...</p>
+            <p>how often do you think an accident might happen?</p>
+            <select class={style.select} onInput={(value) => setChoiceYears(value)}>
+            <option value="1">One accident every year</option>
+            <option value="2">One accident every two years</option>
+            <option value="3">One accident every three years</option>
+            <option value="4">One accident every four years</option>
+            <option value="5">One accident every five years</option>
+            </select>
+            <button class={style.button} type="submit">Submit choice</button>
+        </form>
+    )
+)
 
-// Lifting state up
-// https://reactjs.org/docs/lifting-state-up.html
-// https://codepen.io/gaearon/pen/WZpxpz?editors=0010
-
-// Select Input see https://preactjs.com/guide/v10/forms
-
-class MySelect extends Component {
-    constructor(props: Props) {
-        super(props);
-        // this.onSubmit = this.onSubmit.bind(this);
-        this.state = { value: '' };
-    }
-
-    // onChange = e => {
-    // onChange(e) {
-    //     this.setState({ value: e.target.value });
-    // }
-
-    // onSubmit(e) {
-    //     this.props.onOptionSubmit(e.target.value);
-    // }
-
-    onChange(){}
-    onSubmit(){}
-
-    render() {
-        // const myChoice: number = this.props.choice;
-        // const myPremiums: Premiums = this.props.premiums;
-
-        const myChoice: number = 3;
-        const myPremiums: Premiums = findAll("MySelect");
-
-
-        if (myPremiums === []) {
-            return (
-                <div></div>
-            );
-        } else {
-            return (
-                <form onSubmit={this.onSubmit}>
-                  <p>The cheapest solution for you dependes on ...</p>
-                  <p>How often do you think an accident might happen?</p>
-                  <select class={style.select} value={myChoice} onChange={this.onChange}>
-                    <option value="1">One accident every year</option>
-                    <option value="2">One accident every two years</option>
-                    <option value="3">One accident every three years</option>
-                    <option value="4">One accident every four years</option>
-                    <option value="5">One accident every five years</option>
-                  </select>
-                  <button class={style.button} type="submit">Submit choice</button>
-                </form>
-            );
-        };
-    }
-}
-
-function reportPremiums(where: string, premiums: Premiums): void {
-    console.log(where + " ----------------------------");
-    console.log("     id, deductible, premium, saved");
-    premiums.forEach((e) => {
-        console.log("data: " + e.id + ",     " + e.deductible + ",   " + e.premium + ",   " + e.saved);
-    });
-}
 
 export function cheapestOption(myPremiums: Premiums, years: number): number {
     let newArray: PremiumHelper[] = [];
@@ -144,42 +219,23 @@ export function averageCost(myPremiums: Premiums, years: number, id: number): nu
 }
 
 
-class MyChoice extends Component {
-    constructor(props: Props) {
-        super(props);
-        this.state = {};
-    }
-
-    render() {
-        // const myPremiums = this.state.premium;
-        // const myMessage = this.state.message;
-        // const years = this.state.choice + 1;
-
-        const myPremiums: Premiums = findAll("MyChoice");
-        const myMessage: string = "Good choice";
-        const years: number = 3;
-
-        const bestOption: number = cheapestOption(myPremiums, years);
-        const totalSavings: number = savings(myPremiums, years, bestOption);
-        const costPerYear: number = averageCost(myPremiums, years, bestOption);
-
-        return (
-            <div>
-                <p>
-                    Option {bestOption} is the best choice for you.
-                </p>
-                <p>
-                    You will save {totalSavings.toLocaleString('da-DK')} kr. over {years} years compared to option 1.
-                </p>
-                <p>
-                    Your cost will be {costPerYear.toLocaleString('da-DK')} kr. in average per month over the next three years.
-                </p>
-                <button class={style.button} type="submit">Sounds good to me</button>
-                <button class={style.buttonCancle} type="submit">Let me think about it</button>
-            </div>
-        );
-    }
-}
+const MyChoice = connect('state', actions) (
+    ({ model, setOfferAccepted }): h.JSX.Element => (
+        <div>
+            <p>
+                Option {model.bestOption} is the best choice for you.
+            </p>
+            <p>
+                You will save {model.totalSavings.toLocaleString('da-DK')} kr. over {model.years} years compared to option 1.
+            </p>
+            <p>
+                Your cost will be {model.costPerYear.toLocaleString('da-DK')} kr. in average per month over the next three years.
+            </p>
+            <button class={style.button} type="submit" onClick={(setOfferAccepted)}>Sounds good to me</button>
+            <button class={style.buttonCancle} type="submit">Let me think about it</button>
+        </div>
+    )
+)
 
 function formatPremium(premiumIn: any): Premium {
     return {
@@ -198,112 +254,63 @@ function formatPremiums(premiumsIn: any): Premiums {
     return premiums;
 }
 
-class MyPremiums extends Component {
-    constructor(props: Props) {
-        super(props);
-        this.handlePremiumsChange = this.handlePremiumsChange.bind(this);
-        this.handleChoiceChange = this.handleChoiceChange.bind(this);
-        this.handleMessageChange = this.handleMessageChange.bind(this);
-        this.state = {
-            message: "waiting",
-            choice: 0,
-            premiums: []
-        };
-    }
+const MyPremiums = connect('state', actions) (
+    ({ model, loadPremiums }): h.JSX.Element => (
+        <div class={style.profile}>
+            <h1>Get your personalized offer now.</h1>
+            <p>We will help you choose the right premium and deductibel for your car insurance.</p>
 
-    handlePremiumsChange(myPremiums: Premiums): void {
-        this.setState({premiums: myPremiums});
-    }
+            <p>As you know the higher the deductibe, the lower is the premium, but ...</p>
+            <p>which premium and deductible will be the cheapest for you in the long run?</p>
 
-    handleChoiceChange(myChoice: number): void {
-         this.setState({choice: myChoice});
-    }
+            <p>
+                <button class={style.button} onClick={loadPremiums}>Get an offer</button> {model.userMessage}.
+            </p>
 
-    handleMessageChange(myMessage: string): void {
-         this.setState({message: myMessage});
-    }
-
-    loadPremiums(): void {
-        let url: string = "http://localhost:3000/premiums";
-
-        fetch(url, {
-            method: 'GET', // default
-        })
-            .then(function(response: Response): Promise<object> {
-                return response.json();
-            })
-            .then(function(data: any): void {
-                let myPremiums: Premiums = formatPremiums(data);
-                // this.handlePremiumsChange(myPremiums);
-                // this.handleMessageChange("Got premiums");
-            })
-            .catch(function(error: string): void {
-                // this.handleMessageChange("Ups. Check your internet and try again.");
-            })
-    }
-
-    getInfo = (): void => {
-        this.handleMessageChange("fetching premiums");
-        this.loadPremiums();
-    }
-
-    render() {
-        // const myPremiums = this.state.premium;
-        // const myMessage = this.state.message;
-        // const myChoice = this.state.choice;
-
-        const myPremiums = findAll("MyPremiums");
-        const myMessage = "Waiting";
-        const myChoice = 2;
-
-
-        return (
-            <div class={style.profile}>
-                <h1>Get your personalized offer now.</h1>
-                <p>We will help you choose the right premium and deductibel for your car insurance.</p>
-
-                <p>As you know the higher the deductibe, the lower is the premium, but ...</p>
-                <p>which premium and deductible will be the cheapest for you in the long run?</p>
-
-                <p>
-                    <button class={style.button} onClick={this.getInfo}>Get an offer</button> {myMessage}.
-                </p>
-
-                <div>
-                    <table class={style.table}>
-                        <tr>
-                            <th>#</th>
-                            <th>Yearly Premium</th>
-                            <th>Deductible in case of an accident</th>
-                            {/* <th>Saved</th> */}
-                        </tr>
-                        {myPremiums.map((p: Premium, index: number) => (
-                        <tr key={index}>
-                            <td>{p.id}</td>
-                            <td>{p.premium.toLocaleString('da-DK')} kr.</td>
-                            <td>{p.deductible.toLocaleString('da-DK')} kr.</td>
-                            {/* <td>{p.saved}</td> */}
-                        </tr>
-                        ))}
-                    </table>
-                </div>
-
-                <p></p>
-                <div></div>
-
-                <MySelect
-                    // premiums={myPremiums}
-                    // onOptionSubmit={this.handleChoiceChange}
-                />
-                <MyChoice
-                    // premiums={myPremiums}
-                    // choice={myChoice}
-                />
+            <div>
+                <table class={style.table}>
+                    <tr>
+                        <th>#</th>
+                        <th>Yearly Premium</th>
+                        <th>Deductible in case of an accident</th>
+                        {/* <th>Saved</th> */}
+                    </tr>
+                    {model.allPremiums.map((p: Premium, index: number) => (
+                    <tr key={index}>
+                        <td>{p.id}</td>
+                        <td>{p.premium.toLocaleString('da-DK')} kr.</td>
+                        <td>{p.deductible.toLocaleString('da-DK')} kr.</td>
+                        {/* <td>{p.saved}</td> */}
+                    </tr>
+                    ))}
+                </table>
             </div>
-        );
 
-    }
+            <p></p>
+            <div></div>
 
+            <MySelect />
+            <MyChoice />
+        </div>
+    )
+);
+
+const Profile: FunctionalComponent = (props) => {
+    return (
+        <Provider store={store}>
+            <MyPremiums />
+        </Provider>
+    );
+};
+
+export default Profile;
+
+function reportPremiums(where: string, premiums: Premiums): void {
+    console.log(where + " ----------------------------");
+    console.log("     id, deductible, premium, saved");
+    premiums.forEach((e) => {
+        console.log("data: " + e.id + ",     " + e.deductible + ",   " + e.premium + ",   " + e.saved);
+    });
 }
 
 export function findAll(caller: string): Premiums {
@@ -380,18 +387,3 @@ export function findAll(caller: string): Premiums {
     let premiums: Premiums = formatPremiums(JSON.parse(premiumJson));
     return premiums;
 }
-
-
-const Profile: FunctionalComponent<Props> = (props: Props) => {
-    const { user } = props;
-
-    // gets called when this route is navigated to
-
-    return (
-        <div>
-            <MyPremiums />
-        </div>
-    );
-};
-
-export default Profile;
