@@ -1,6 +1,6 @@
 # We Got You Covered
 
-## Small frontend challenge involving TypeScript, Preact and JSX.
+## Small frontend challenge involving TypeScript, Preact, Unistore and JSX.
 
 The idea is to help the user choose the optimal combination of premium and deductible.
 
