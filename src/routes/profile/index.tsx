@@ -143,14 +143,14 @@ const MySelect = connect('model', actions) (
         <form onSubmit={(value) => setChoiceYears(value)}>
             <p>The cheapest solution for you dependes on ...</p>
             <p>how often do you think an accident might happen?</p>
-            <select class={style.select} onInput={(value) => setChoiceYears(value)}>
+            <select className={style.select} onInput={(value) => setChoiceYears(value)}>
             <option value="1">One accident every year</option>
             <option value="2">One accident every two years</option>
             <option value="3">One accident every three years</option>
             <option value="4">One accident every four years</option>
             <option value="5">One accident every five years</option>
             </select>
-            <button class={style.button} type="submit">Submit choice</button>
+            <button className={style.button} type="submit">Submit choice</button>
         </form>
     )
 )
@@ -231,8 +231,8 @@ const MyChoice = connect('model', actions) (
             <p>
                 Your cost will be {model.costPerYear.toLocaleString('da-DK')} kr. in average per month over the next three years.
             </p>
-            <button class={style.button} type="submit" onClick={(setOfferAccepted)}>Sounds good to me</button>
-            <button class={style.buttonCancle} type="submit">Let me think about it</button>
+            <button className={style.button} type="submit" onClick={(setOfferAccepted)}>Sounds good to me</button>
+            <button className={style.buttonCancle} type="submit">Let me think about it</button>
         </div>
     )
 )
@@ -256,7 +256,7 @@ function formatPremiums(premiumsIn: any): Premiums {
 
 const MyPremiums = connect('model', actions) (
     ({ model, loadPremiums }): h.JSX.Element => (
-        <div class={style.profile}>
+        <div className={style.profile}>
             <h1>Get your personalized offer now.</h1>
             <p>We will help you choose the right premium and deductibel for your car insurance.</p>
 
@@ -264,11 +264,11 @@ const MyPremiums = connect('model', actions) (
             <p>which premium and deductible will be the cheapest for you in the long run?</p>
 
             <p>
-                <button class={style.button} onClick={loadPremiums}>Get an offer</button> {model.userMessage}.
+                <button className={style.button} onClick={loadPremiums}>Get an offer</button> {model.userMessage}.
             </p>
 
             <div>
-                <table class={style.table}>
+                <table className={style.table}>
                     <tr>
                         <th>#</th>
                         <th>Yearly Premium</th>
