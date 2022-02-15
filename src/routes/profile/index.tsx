@@ -138,7 +138,7 @@ export interface Premium {
 
 export type Premiums = Premium[];
 
-const MySelect = connect('state', actions) (
+const MySelect = connect('model', actions) (
     ({ model, setChoiceYears }): h.JSX.Element => (
         <form onSubmit={(value) => setChoiceYears(value)}>
             <p>The cheapest solution for you dependes on ...</p>
@@ -219,7 +219,7 @@ export function averageCost(myPremiums: Premiums, years: number, id: number): nu
 }
 
 
-const MyChoice = connect('state', actions) (
+const MyChoice = connect('model', actions) (
     ({ model, setOfferAccepted }): h.JSX.Element => (
         <div>
             <p>
@@ -254,7 +254,7 @@ function formatPremiums(premiumsIn: any): Premiums {
     return premiums;
 }
 
-const MyPremiums = connect('state', actions) (
+const MyPremiums = connect('model', actions) (
     ({ model, loadPremiums }): h.JSX.Element => (
         <div class={style.profile}>
             <h1>Get your personalized offer now.</h1>
