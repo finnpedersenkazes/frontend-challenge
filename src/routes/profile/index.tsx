@@ -52,21 +52,6 @@ function setErrorState(errorMessage: string): { model: State } {
     return { model: resultModel }
 }
 
-function setChoiceYears(years: number): { model: State } {
-    let { model: resultModel } = store.getState();
-    resultModel.success = true;
-    resultModel.appState = "gotChoice";
-    resultModel.errorMessage = undefined;
-    resultModel.userMessage = "Good choice";
-    resultModel.choiceYears = years;
-    if (resultModel.allPremiums) {
-        resultModel.bestOption = cheapestOption(resultModel.allPremiums, years);
-        resultModel.totalSavings = savings(resultModel.allPremiums, years, resultModel.bestOption);
-        resultModel.costPerYear = averageCost(resultModel.allPremiums, years, resultModel.bestOption);
-    }
-    return { model: resultModel }
-}
-
 function setFetchingPremiums(): { Model: State } {
     let resultModel: State = initModel;
     resultModel.success = true;
@@ -95,13 +80,21 @@ function setOfferAccepted(): { model: State } {
     return { model: resultModel }
 }
 
-// interface Actions {
-//     loadPremiums() : State;
-// }
-
-// const actions: Actions = (store: any) => ({
-
 const actions = (store: any) => ({
+    setChoiceYears(years: number): { model: State } {
+        let { model: resultModel } = store.getState();
+        resultModel.success = true;
+        resultModel.appState = "gotChoice";
+        resultModel.errorMessage = undefined;
+        resultModel.userMessage = "Good choice";
+        resultModel.choiceYears = years;
+        if (resultModel.allPremiums) {
+            resultModel.bestOption = cheapestOption(resultModel.allPremiums, years);
+            resultModel.totalSavings = savings(resultModel.allPremiums, years, resultModel.bestOption);
+            resultModel.costPerYear = averageCost(resultModel.allPremiums, years, resultModel.bestOption);
+        }
+        return { model: resultModel }
+    },
 
     loadPremiums: () => {
         let url: string = "http://localhost:3000/premiums";
@@ -120,11 +113,6 @@ const actions = (store: any) => ({
             })
     },
 
-    // setChoiceYears(years: number): () => {
-    //     let newState = setChoiceYears(years);
-    //     store.setState({Model: newState});
-    // },
-
 });
 
 // https://www.youtube.com/watch?v=hipFdyhhdTg
@@ -138,7 +126,7 @@ export interface Premium {
 
 export type Premiums = Premium[];
 
-const MySelect = connect('model', actions) (
+const Select = connect('model', actions) (
     ({ model, setChoiceYears }): h.JSX.Element => (
         <form onSubmit={(value) => setChoiceYears(value)}>
             <p>The cheapest solution for you dependes on ...</p>
@@ -154,7 +142,6 @@ const MySelect = connect('model', actions) (
         </form>
     )
 )
-
 
 export function cheapestOption(myPremiums: Premiums, years: number): number {
     let newArray: PremiumHelper[] = [];
@@ -219,7 +206,7 @@ export function averageCost(myPremiums: Premiums, years: number, id: number): nu
 }
 
 
-const MyChoice = connect('model', actions) (
+const Choice = connect('model', actions) (
     ({ model, setOfferAccepted }): h.JSX.Element => (
         <div>
             <p>
@@ -254,7 +241,7 @@ function formatPremiums(premiumsIn: any): Premiums {
     return premiums;
 }
 
-const MyPremiums = connect('model', actions) (
+const Premiums = connect('model', actions) (
     ({ model, loadPremiums }): h.JSX.Element => (
         <div className={style.profile}>
             <h1>Get your personalized offer now.</h1>
@@ -289,21 +276,31 @@ const MyPremiums = connect('model', actions) (
             <p></p>
             <div></div>
 
-            <MySelect />
-            <MyChoice />
+            <Select />
+            <Choice />
         </div>
     )
 );
 
-const Profile: FunctionalComponent = (props) => {
+
+export default function Profile() {
     return (
         <Provider store={store}>
-            <MyPremiums />
+            <Premiums />
         </Provider>
     );
 };
 
-export default Profile;
+
+// const Profile: FunctionalComponent = (props) => {
+//     return (
+//         <Provider store={store}>
+//             <Premiums />
+//         </Provider>
+//     );
+// };
+
+// export default Profile;
 
 function reportPremiums(where: string, premiums: Premiums): void {
     console.log(where + " ----------------------------");
