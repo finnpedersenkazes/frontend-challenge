@@ -1,12 +1,12 @@
 import { h } from 'preact';
 import Profile from '../src/routes/profile';
-import { Premium, Premiums, cheapestOption, savings, averageCost, findAll } from '../src/routes/profile/index';
+import { initModel, Premium, Premiums, cheapestOption, savings, averageCost, findAll } from '../src/routes/profile/index';
 // See: https://github.com/preactjs/enzyme-adapter-preact-pure
 import { shallow } from 'enzyme';
 
 describe('Initial Test of the Profile', () => {
     test('Header renders 3 nav items', () => {
-        const context = shallow(<Profile />);
+        const context = shallow(<Profile user='Finn' model={initModel} />);
         expect(context.find('div').length).toBe(1);
     });
 });

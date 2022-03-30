@@ -15,6 +15,37 @@ export type Premiums = Premium[];
 
 interface Props {
     user: string;
+    model: State;
+}
+
+export type AppStates = "start" | "fetchingPremiums" | "gotPremiums" | "gotChoice" | "gotAccept" | "error" ;
+
+interface State {
+    success: boolean;
+    appState: AppStates,
+    errorMessage?: string;
+    userMessage?: string;
+    choiceYears?: number;
+    allPremiums?: Premiums;
+    choiceMade: boolean;
+    bestOption?: number;
+    totalSavings?: number;
+    costPerYear?: number;
+    offerAccepted: boolean;
+};
+
+export const initModel: State = {
+    success: true,
+    appState: "start",
+    errorMessage: undefined,
+    userMessage: undefined,
+    choiceYears: undefined,
+    allPremiums: undefined,
+    choiceMade: false,
+    bestOption: undefined,
+    totalSavings: undefined,
+    costPerYear: undefined,
+    offerAccepted: false
 }
 
 // Lifting state up
@@ -198,13 +229,13 @@ function formatPremiums(premiumsIn: any): Premiums {
     return premiums;
 }
 
-class MyPremiums extends Component {
+class ViewPremiums extends Component {
     constructor(props: Props) {
         super(props);
         this.handlePremiumsChange = this.handlePremiumsChange.bind(this);
         this.handleChoiceChange = this.handleChoiceChange.bind(this);
         this.handleMessageChange = this.handleMessageChange.bind(this);
-        this.state = {
+        this.model = {
             message: "waiting",
             choice: 0,
             premiums: []
@@ -248,13 +279,13 @@ class MyPremiums extends Component {
     }
 
     render() {
-        // const myPremiums = this.state.premium;
-        // const myMessage = this.state.message;
-        // const myChoice = this.state.choice;
+        const myPremiums = props.model.premium;
+        const myMessage = props.model.message;
+        const myChoice = props.model.choice;
 
-        const myPremiums = findAll("MyPremiums");
-        const myMessage = "Waiting";
-        const myChoice = 2;
+        // const myPremiums = findAll("MyPremiums");
+        // const myMessage = "Waiting";
+        // const myChoice = 2;
 
 
         return (
@@ -383,14 +414,26 @@ export function findAll(caller: string): Premiums {
 
 
 const Profile: FunctionalComponent<Props> = (props: Props) => {
-    const { user } = props;
+    const { user, model } = props;
 
     // gets called when this route is navigated to
 
     return (
-        <div>
-            <MyPremiums />
-        </div>
+        // https://preactjs.com/guide/v10/api-reference#h--createelement
+        // https://blog.francium.tech/react-js-advance-guide-cheat-sheet-403cf7ff6f82
+        // https://reactjs.org/docs/react-api.html
+        // https://reactjs.org/docs/react-without-jsx.html
+        h(
+            'div',
+            null,
+            h('ViewPremiums',
+                { user: 'Finn', model: initModel },
+                null)
+        )
+
+        // <div>
+        //     <ViewPremiums />
+        // </div>
     );
 };
 
